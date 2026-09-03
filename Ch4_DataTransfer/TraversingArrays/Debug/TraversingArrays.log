@@ -1,0 +1,3 @@
+﻿  Assembling main.asm...
+main.obj : warning LNK4258: directive '/ENTRY:main@0' not compatible with switch '/ENTRY:main'; ignored
+  TraversingArrays.vcxproj -> C:\Users\octavio.ortiz\OneDrive - Imperial Valley College\CS 281\ClassScripts\CS281-Fall2026\Ch4_DataTransfer\TraversingArrays\Debug\TraversingArrays.exe
