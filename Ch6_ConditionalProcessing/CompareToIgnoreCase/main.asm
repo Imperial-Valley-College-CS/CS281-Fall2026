@@ -5,8 +5,8 @@
 ExitProcess proto, dwExitCode:dword
 
 .data
-	strOne byte "HaRBOR",0
-	strTwo byte "haLo",0
+	strTwo byte "thundercats",0
+	strOne byte "Thunder",0
 	ans dword 0
 
 .code
@@ -15,7 +15,7 @@ ExitProcess proto, dwExitCode:dword
 		mov esi, offset strOne
 		mov edi, offset strTwo
 		call compareToIgnoreCase
-		;mov ans, eax	
+		mov ans, eax	
 				
 		INVOKE ExitProcess, 0
 	main endp
@@ -26,45 +26,83 @@ ExitProcess proto, dwExitCode:dword
 	;Receives: offset of stringOne (ESI), offset of stringTwo (EDI)
 	;Returns: integer from subtraction in EAX
 	compareToIgnoreCase proc
-		call toLowerCase			;strOne is in ESI (strOne will be made lowercase)
-		push esi						;save offset of strOne in stack
-		mov esi, edi					;offset of strTwo is in ESI
-		call toLowerCase			;make strTwo all lowercase
-		pop esi							;restore ESI 
+		
+		push esi				;save offset of strOne
+		push edi				;save offset of strTwo
+		mov ebx, 0			;ebx will have chars to substract from each other
+		mov eax, 0			;return value will be in eax
 
-		ret
+		L1:
+			cmp byte ptr [esi], 0
+			je reachedEndOfString
+			cmp byte ptr [edi], 0
+			je reachedEndOfString
+			movzx eax, byte ptr [esi]			;move 1 byte from memory (ESI) into eax
+			call makeLower
+			mov bh, al									;char from strOne in bh
+			movzx eax, byte ptr [edi]			;move 1 byte from memory (EDI) into eax
+			call makeLower
+			mov bl, al									;char from strTwo in bl
+			cmp bh, bl
+			jne foundDistinctChars
+			inc esi
+			inc edi
+			jmp L1
+
+		foundDistinctChars:
+			sub bh, bl					;subtract char from strOne minus char from strTwo
+			movzx eax, bh			;move return value to return register
+			pop edi						;clear stack before returning
+			pop esi						;clear stack before returning
+			jmp done
+
+		reachedEndOfString:
+			pop edi						
+			mov esi, edi
+			call strLen						;get length of strTwo
+			mov ebx, eax					;move length of strTwo into ebx
+			pop esi
+			call strLen						;get length of strOne
+			sub eax, ebx						;subtract length of strOne minus length of StrTwo
+
+		done:	
+			ret
 	compareToIgnoreCase endp
 
-	;Summary: converts alpha-characters in String from upper case to lower case (in-place)
+	;Summary: calculates and returns the length of a string
 	;Receives: offset of the String (ESI)
-	;Returns: nothing
-	toLowerCase proc
-		push eax				;save the data in EAX by pushing it onto the stack
-		push esi				;save the datae in ESI by pushing it onto the stack		
-		startTraversing:
-			mov al, [esi]		;move next character in String int AL
-			cmp al, 0			;check to see if you reached null
+	;Returns: length of String (EAX)
+	strLen proc
+		mov eax, 0
+		push esi				;save ESI by pushing onto stack
+		L1:
+			cmp byte ptr [esi], 0
 			je done
-			cmp al, 65			;65 decimal is capital A
-			jge checkLessThanZ
-		reenterLoop:
-			inc esi				;point to next characters in string
-			jmp startTraversing
+			inc esi
+			inc eax				;increase counter (length of string)
+			jmp L1
+		done:
+			pop esi				;restore ESI before returning
+			ret
+	strLen endp
+
+	;Summary: converts single alpha-character to lowercase if necessary and returns it
+	;Receives: character (EAX)
+	;Returns: character (EAX)
+	makeLower proc
+		cmp al, 41h			;compare char to 'A'
+		jge checkLessThanZ
+		jmp done
 
 		checkLessThanZ:
-			cmp al, 90			;90 decimal is capital Z
-			jle makeLowerCase
-			jmp reenterLoop
+			cmp al, 5ah			;compare char to 'Z'
+			jle changeCase
+			jmp done
 
-		makeLowerCase:
-			add al, 32			;makes character lowecase
-			mov [esi], al		;moves lowercase character back into memory
-			jmp reenterLoop
-
+		changeCase:
+			add al, 20h
 		done:
-			pop esi				;restores value in ESI
-			pop eax				;restores value in EAX
 			ret
-	toLowerCase endp
+	makeLower endp
 
 END main
